@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TurdPolisher</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TurdPolisher">
+<style>
+  :root {
+    --burnt-orange: #e76f51;
+    --coral: #f4a261;
+    --teal: #2dd4bf;
+    --teal-2: #0d9488;
+    --teal-3: #04211e;
+    --bg: #000000;
+    --card-bg: #0a0f0e;
+    --text: #dff5f1;
+    --text-dim: #7fa39d;
+    --line: rgba(45,212,191,0.28);
+    --font-header: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
+    --font-body: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
+    --radius: 10px;
+    --shadow: 0 0 0 1px rgba(45,212,191,0.10), 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  h1, h2, h3 { font-family: var(--font-header); margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ---------- marquee header ---------- */
+  .marquee {
+    background: linear-gradient(160deg, var(--teal-2) 0%, #000000 55%, var(--burnt-orange) 145%);
+    color: var(--text);
+    padding: 28px 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .marquee::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(45,212,191,0.08) 0 2px, transparent 2px 26px);
+    pointer-events: none;
+  }
+  .marquee-inner { position: relative; max-width: 900px; margin: 0 auto; }
+  .marquee h1 {
+    font-size: clamp(28px, 6vw, 40px);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .marquee h1 .bulb {
+    color: var(--coral);
+    font-size: 0.55em;
+  }
+  .marquee p.tag {
+    margin: 6px 0 0;
+    color: var(--coral);
+    font-size: 14px;
+    letter-spacing: 0.03em;
+  }
+  .settings-btn {
+    position: absolute;
+    top: 26px;
+    right: 20px;
+    background: rgba(223,245,241,0.12);
+    border: 1px solid rgba(223,245,241,0.35);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .settings-btn:hover { background: rgba(223,245,241,0.22); }
+
+  /* ---------- controls ---------- */
+  main { max-width: 900px; margin: 0 auto; padding: 22px 20px 60px; }
+
+  .controls {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 22px;
+  }
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+  .mode-toggle button {
+    border: none;
+    background: transparent;
+    padding: 8px 20px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--teal);
+  }
+  .mode-toggle button[aria-pressed="true"] {
+    background: var(--burnt-orange);
+    color: #fff;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--teal);
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--teal-2);
+    color: var(--coral);
+    border-color: var(--teal-2);
+  }
+
+  .mood-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mood-row input[type="text"] {
+    flex: 1 1 220px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 15px;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .find-btn {
+    flex: 0 0 auto;
+    background: var(--burnt-orange);
+    color: #fff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: 0 3px 0 #b6502f;
+  }
+  .find-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b6502f; }
+  .find-btn:disabled { opacity: 0.6; box-shadow: none; cursor: default; }
+
+  .status-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--teal);
+    min-height: 16px;
+  }
+
+  /* ---------- results grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: rise 0.25s ease;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card .poster-wrap {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    background: var(--teal-3);
+  }
+  .card .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .poster-fallback {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--coral);
+    font-family: var(--font-header);
+    font-size: 14px;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .half-zone {
+    position: absolute;
+    left: 0; right: 0;
+    height: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.65);
+    transition: background 0.15s ease;
+  }
+  .half-zone.watch {
+    top: 0;
+    background: rgba(39,174,96,0.30);
+  }
+  .half-zone.dismiss {
+    bottom: 0;
+    background: rgba(230,57,70,0.30);
+  }
+  .half-zone.watch:hover, .half-zone.watch:focus-visible { background: rgba(39,174,96,0.55); }
+  .half-zone.dismiss:hover, .half-zone.dismiss:focus-visible { background: rgba(230,57,70,0.55); }
+
+  .tear {
+    position: relative;
+    height: 0;
+    border-top: 2px dashed var(--line);
+    margin: 0 14px;
+  }
+  .tear::before, .tear::after {
+    content: "";
+    position: absolute;
+    top: -7px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+  .tear::before { left: -21px; }
+  .tear::after { right: -21px; }
+
+  .card-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .card-body h3 { font-size: 16px; line-height: 1.25; color: var(--teal); }
+  .card-body .year { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .card-body .hook { font-size: 13.5px; line-height: 1.4; color: var(--text); flex: 1; }
+  .card-body .cast-line { font-size: 12px; color: var(--text-dim); line-height: 1.35; }
+  .card-body .source-line {
+    font-size: 11px;
+    color: var(--coral);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .card-body .style-line {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--burnt-orange);
+    font-weight: 700;
+  }
+  .title-link {
+    color: inherit;
+    text-decoration: none;
+    background-image: linear-gradient(var(--coral), var(--coral));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 2px;
+    transition: background-size 0.15s ease, color 0.15s ease;
+  }
+  .title-link:hover, .title-link:focus-visible {
+    color: var(--burnt-orange);
+    background-size: 100% 2px;
+  }
+
+  /* ---------- empty / loading ---------- */
+  .placeholder-state {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--teal);
+  }
+  .placeholder-state h3 { margin-bottom: 8px; }
+  .placeholder-state p { font-size: 14px; margin: 0; color: var(--text-dim); }
+  .spinner {
+    width: 30px; height: 30px;
+    border: 3px solid var(--line);
+    border-top-color: var(--burnt-orange);
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- settings drawer ---------- */
+  .backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 20;
+  }
+  .drawer {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(420px, 100%);
+    background: var(--bg);
+    z-index: 21;
+    overflow-y: auto;
+    box-shadow: -12px 0 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(45,212,191,0.12);
+    padding: 20px;
+  }
+  .drawer h2 { font-size: 20px; color: var(--teal); margin-bottom: 4px; }
+  .drawer-close {
+    float: right;
+    background: none; border: none;
+    font-size: 20px; color: var(--teal);
+    padding: 4px 8px;
+  }
+  .field-group {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    box-shadow: 0 0 0 1px rgba(45,212,191,0.08);
+  }
+  .field-group h3 { font-size: 14px; color: var(--coral); margin-bottom: 8px; }
+  .field-group label { display: block; font-size: 12.5px; font-weight: 700; color: var(--teal); margin: 10px 0 4px; }
+  .field-group input[type="text"], .field-group input[type="password"] {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-size: 14px;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .field-group .help {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    line-height: 1.45;
+  }
+  .field-group .help ol { margin: 4px 0 0 18px; padding: 0; }
+  .field-group .help a { color: var(--burnt-orange); font-weight: 600; }
+  .field-note { font-size: 12px; margin-top: 8px; padding: 8px 10px; border-radius: 6px; }
+  .field-note.ok { background: rgba(45,212,191,0.14); color: var(--teal); }
+  .field-note.warn { background: rgba(231,111,81,0.14); color: var(--coral); }
+
+  .save-row { display: flex; gap: 8px; margin-top: 16px; }
+  .save-row button {
+    flex: 1;
+    border: none;
+    padding: 11px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .save-row .primary { background: var(--burnt-orange); color: #fff; }
+  .save-row .secondary { background: var(--card-bg); color: var(--teal); border: 1px solid var(--line) !important; }
+
+  .exclusion-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .exclusion-tag {
+    background: var(--teal-2);
+    color: var(--coral);
+    font-size: 12px;
+    padding: 4px 8px 4px 10px;
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .exclusion-tag button { background: none; border: none; color: var(--coral); font-size: 13px; padding: 0; }
+  .add-exclusion-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-exclusion-row input { flex: 1; }
+  .add-exclusion-row button {
+    background: var(--teal-2); color: #fff; border: none;
+    padding: 0 12px; border-radius: 6px; font-size: 13px; font-weight: 700;
+  }
+
+  .watched-count { font-size: 12.5px; color: var(--text-dim); margin-top: 6px; }
+
+  @media (max-width: 520px) {
+    .settings-btn { position: static; display: block; width: fit-content; margin-top: 12px; }
+    .marquee { padding-bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="marquee">
+    <div class="marquee-inner">
+      <h1><span class="bulb">✷</span> TurdPolisher <span class="bulb">✷</span></h1>
+      <p class="tag">Obscure picks, tuned to what you actually like</p>
+      <button class="settings-btn" id="openSettings" type="button">⚙ Settings</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="mode-toggle" role="group" aria-label="Movies or TV">
+        <button type="button" id="modeMovie" aria-pressed="true">Movie</button>
+        <button type="button" id="modeTv" aria-pressed="false">TV</button>
+      </div>
+
+      <div class="chip-row" id="genreChips" role="group" aria-label="Genre"></div>
+
+      <div class="mood-row">
+        <input type="text" id="moodInput" placeholder="Mood or angle — e.g. crime conspiracy, dark comedy, eccentric bands" />
+        <button class="find-btn" id="findBtn" type="button">Find picks</button>
+      </div>
+      <div class="status-line" id="statusLine"></div>
+    </section>
+
+    <section class="grid" id="resultsGrid"></section>
+    <section class="placeholder-state" id="placeholderState" hidden></section>
+  </main>
+
+  <div class="backdrop" id="backdrop" hidden></div>
+  <aside class="drawer" id="settingsDrawer" hidden aria-label="Settings">
+    <button class="drawer-close" id="closeSettings" type="button" aria-label="Close settings">✕</button>
+    <h2>Settings</h2>
+
+    <div class="field-group">
+      <h3>TMDB (powers every recommendation)</h3>
+      <label for="tmdbKey">API key</label>
+      <input type="password" id="tmdbKey" autocomplete="off" />
+      <div class="help">
+        Free, no card needed.
+        <ol>
+          <li>Go to <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org/signup</a> and make an account.</li>
+          <li>Open Settings → API, click "Create" under Developer, fill the short form (any use case is fine).</li>
+          <li>Copy the value labelled <strong>API Key (v3 auth)</strong> and paste it here.</li>
+        </ol>
+      </div>
+      <div id="tmdbStatus"></div>
+    </div>
+
+    <div class="field-group">
+      <h3>AI picks (optional)</h3>
+      <label for="llmKey">Anthropic or Gemini API key</label>
+      <input type="password" id="llmKey" autocomplete="off" />
+      <div class="help">
+        Adds up to 2 AI-suggested titles per round, tuned to your genre, mood word, and deny-list. Works with either:
+        <ol>
+          <li><strong>Anthropic (Claude)</strong> — key starts with <strong>sk-ant-</strong>, from <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> → API keys (pay-per-use; a round costs a fraction of a cent).</li>
+          <li><strong>Google Gemini</strong> — key starts with <strong>AIza</strong>, free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</li>
+        </ol>
+        The provider is detected from the key. Like the TMDB key, it's stored only in this browser and sent only to that provider. Every AI suggestion still passes the same filters as everything else.
+      </div>
+      <div id="llmStatus"></div>
+    </div>
+
+    <div class="field-group">
+      <h3>Add-to-library links</h3>
+      <label for="radarrHost">Radarr address (movies)</label>
+      <input type="text" id="radarrHost" placeholder="192.168.1.9:7878" />
+      <label for="sonarrHost">Sonarr address (TV)</label>
+      <input type="text" id="sonarrHost" placeholder="192.168.1.9:8989" />
+      <div class="help">Only change these if your server's address changes.</div>
+    </div>
+
+    <div class="field-group">
+      <h3>Never recommend</h3>
+      <div class="help">Seeded from your usual taste. Add or remove anything.</div>
+      <div class="exclusion-list" id="exclusionList"></div>
+      <div class="add-exclusion-row">
+        <input type="text" id="newExclusion" placeholder="Add a person, show, or film" />
+        <button type="button" id="addExclusionBtn">Add</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <h3>Watched list</h3>
+      <div class="watched-count" id="watchedCount"></div>
+      <div class="save-row">
+        <button class="secondary" id="clearDismissed" type="button">Clear dismissed picks</button>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="primary" id="saveSettings" type="button">Save</button>
+    </div>
+  </aside>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- static data ---------------- */
+
+  var GENRES = {
+    movie: [
+      { id: 35, label: "Comedy" }, { id: 80, label: "Crime" }, { id: 18, label: "Drama" },
+      { id: 53, label: "Thriller" }, { id: 9648, label: "Mystery" }, { id: 27, label: "Horror" },
+      { id: 878, label: "Sci-Fi" }, { id: 14, label: "Fantasy" }, { id: 99, label: "Documentary" },
+      { id: 10752, label: "War" }
+    ],
+    tv: [
+      { id: 35, label: "Comedy" }, { id: 80, label: "Crime" }, { id: 18, label: "Drama" },
+      { id: 9648, label: "Mystery" }, { id: 10765, label: "Sci-Fi & Fantasy" }, { id: 99, label: "Documentary" },
+      { id: 10768, label: "War & Politics" }, { id: 10759, label: "Action & Adventure" }, { id: 10764, label: "Reality TV" }
+    ]
+  };
+
+  var HARD_EXCLUDE_GENRES = { movie: [16, 10402, 10770], tv: [16, 10762, 10767, 10763] }; // animation, family/kids/talk/news-ish
+  var KEYWORD_BLOCKLIST = /superhero|marvel|dc comics|based on comic|comic book|panel show|game show/i;
+
+  var DEFAULT_EXCLUDE_PEOPLE = [
+    "Dwayne Johnson", "Adam Sandler", "Ted Danson", "Vince Vaughn", "Taika Waititi",
+    "Ricky Gervais", "Kitty Flanagan", "Tina Fey", "Natasha Lyonne", "Lisa Kudrow",
+    "Alan Carr", "Jimmy Carr", "Amy Schumer", "John Cena", "Dave Bautista"
+  ];
+  var DEFAULT_EXCLUDE_TITLES = [
+    "The Big Bang Theory", "Resident Alien", "Community", "Succession", "Arrested Development",
+    "30 Rock", "Mythic Quest", "Scrubs", "Parks and Recreation", "The IT Crowd", "Beef",
+    "Camping", "Barry", "Ted Lasso", "Our Flag Means Death", "Jury Duty", "The Middle",
+    "Universal Basic Guys", "Party Down", "Upright"
+  ];
+  var SEED_ALREADY_SEEN = {
+    tv: [
+      "Fargo", "The End of the F***ing World", "Deadwood", "The Wire", "Oz", "Dexter",
+      "Nathan For You", "Would I Lie to You?", "Check It Out! With Dr. Steve Brule",
+      "Get Shorty", "Preacher", "Happy!", "Utopia", "Justified", "Rome", "Generation Kill",
+      "The Righteous Gemstones", "Breaking Bad", "Flight of the Conchords", "Silicon Valley",
+      "The Shield", "BrainDead", "Clarkson's Farm", "Patriot", "Peep Show",
+      "Garth Marenghi's Darkplace", "Brass Eye", "Guilt", "Boat Story", "Brassic",
+      "Year of the Rabbit", "Black Doves", "Homeland", "King of the Hill", "Goliath", "Amandaland"
+    ],
+    movie: [
+      "Big Trouble in Little China", "Pan's Labyrinth", "Fight Club", "Back to the Future",
+      "Vanilla Sky", "Borat", "Gremlins", "Overnight", "The Great Hip-Hop Hoax"
+    ]
+  };
+
+  var GENRE_MAP = { movie: {}, tv: {} };
+  GENRES.movie.forEach(function (g) { GENRE_MAP.movie[g.id] = g.label; });
+  GENRES.tv.forEach(function (g) { GENRE_MAP.tv[g.id] = g.label; });
+
+  /* ---------------- state ---------------- */
+
+  var state = {
+    mode: "movie",
+    activeGenre: null,
+    settings: { tmdbKey: "", llmKey: "", radarrHost: "192.168.1.9:7878", sonarrHost: "192.168.1.9:8989" },
+    excludePeople: DEFAULT_EXCLUDE_PEOPLE.slice(),
+    excludeTitles: DEFAULT_EXCLUDE_TITLES.slice(),
+    seenIds: { movie: {}, tv: {} },
+    dismissedIds: { movie: {}, tv: {} },
+    softExcludeIds: { movie: {}, tv: {} },
+    genreDislikeTally: { movie: {}, tv: {} },
+    pool: { movie: [], tv: [] },
+    lastQuery: { movie: { genreId: null, keywordId: null }, tv: { genreId: null, keywordId: null } },
+    seeded: false
+  };
+
+  /* ---------------- storage helpers ---------------- */
+
+  var STORAGE_PREFIX = "turdpolisher:";
+
+  function storageGet(key, fallback) {
+    return new Promise(function (resolve) {
+      try {
+        var raw = window.localStorage.getItem(STORAGE_PREFIX + key);
+        resolve(raw === null ? fallback : JSON.parse(raw));
+      } catch (e) {
+        resolve(fallback);
+      }
+    });
+  }
+  function storageSet(key, value) {
+    return new Promise(function (resolve) {
+      try {
+        window.localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+      } catch (e) {}
+      resolve(null);
+    });
+  }
+
+  function loadState() {
+    return Promise.all([
+      storageGet("settings", null),
+      storageGet("excludePeople", null),
+      storageGet("excludeTitles", null),
+      storageGet("seenIds", null),
+      storageGet("dismissedIds", null),
+      storageGet("softExcludeIds", null),
+      storageGet("genreDislikeTally", null),
+      storageGet("seeded", false)
+    ]).then(function (r) {
+      if (r[0]) state.settings = r[0];
+      if (r[1]) state.excludePeople = r[1];
+      if (r[2]) state.excludeTitles = r[2];
+      if (r[3]) state.seenIds = r[3];
+      if (r[4]) state.dismissedIds = r[4];
+      if (r[5]) state.softExcludeIds = r[5];
+      if (r[6]) state.genreDislikeTally = r[6];
+      state.seeded = !!r[7];
+    });
+  }
+
+  function persistSettings() { return storageSet("settings", state.settings); }
+  function persistExclusions() {
+    return Promise.all([storageSet("excludePeople", state.excludePeople), storageSet("excludeTitles", state.excludeTitles)]);
+  }
+  function persistTrackers() {
+    return Promise.all([
+      storageSet("seenIds", state.seenIds),
+      storageSet("dismissedIds", state.dismissedIds),
+      storageSet("softExcludeIds", state.softExcludeIds),
+      storageSet("genreDislikeTally", state.genreDislikeTally)
+    ]);
+  }
+
+  /* ---------------- network helper ---------------- */
+
+  // Abort a fetch that hangs (e.g. a host advertising broken IPv6 never
+  // completes the connection) so the UI falls into its fallback path fast
+  // instead of spinning for the browser's multi-minute default timeout.
+  function timedFetch(url, opts, ms) {
+    var o = opts || {};
+    if (typeof AbortController === "undefined") return fetch(url, o);
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, ms || 8000);
+    o.signal = ctrl.signal;
+    return fetch(url, o).then(
+      function (r) { clearTimeout(t); return r; },
+      function (e) { clearTimeout(t); throw e; }
+    );
+  }
+
+  /* ---------------- TMDB helpers ---------------- */
+
+  function tmdbUrl(path, params) {
+    var u = new URL("https://api.themoviedb.org/3" + path);
+    u.searchParams.set("api_key", state.settings.tmdbKey);
+    for (var k in params) { if (params[k] !== undefined && params[k] !== null) u.searchParams.set(k, params[k]); }
+    return u.toString();
+  }
+
+  function tmdbFetch(path, params) {
+    return timedFetch(tmdbUrl(path, params), null, 8000).then(function (res) {
+      if (!res.ok) throw new Error("TMDB " + res.status);
+      return res.json();
+    });
+  }
+
+  function titleOf(item, mode) { return mode === "movie" ? item.title : item.name; }
+  function yearOf(item, mode) {
+    var d = mode === "movie" ? item.release_date : item.first_air_date;
+    return d ? d.slice(0, 4) : "";
+  }
+
+  /* ---------------- one-time taste seeding ---------------- */
+
+  function seedAlreadySeen() {
+    if (state.seeded || !state.settings.tmdbKey) return Promise.resolve();
+    var jobs = [];
+    ["movie", "tv"].forEach(function (mode) {
+      SEED_ALREADY_SEEN[mode].slice(0, 6).forEach(function (name) {
+        jobs.push(
+          tmdbFetch(mode === "movie" ? "/search/movie" : "/search/tv", { query: name })
+            .then(function (data) {
+              if (data.results && data.results[0]) state.seenIds[mode][data.results[0].id] = true;
+            })
+            .catch(function () {})
+        );
+      });
+    });
+    return Promise.all(jobs).then(function () {
+      state.seeded = true;
+      return Promise.all([storageSet("seeded", true), persistTrackers()]);
+    });
+  }
+
+  /* ---------------- Reddit community picks (best-effort, may fail on CORS/blocking) ---------------- */
+
+  var SUBREDDITS = { movie: ["MovieSuggestions", "ifyoulikeblank"], tv: ["televisionsuggestions", "ifyoulikeblank"] };
+
+  function redditFetch(path, params) {
+    function build(base, ext) {
+      var u = new URL(base + path + ext);
+      u.searchParams.set("raw_json", "1");
+      for (var k in params) u.searchParams.set(k, params[k]);
+      return u.toString();
+    }
+    function getJson(url) {
+      return timedFetch(url, null, 8000).then(function (r) {
+        if (!r.ok) throw new Error("reddit " + r.status);
+        return r.json();
+      });
+    }
+    // api.reddit.com serves the same listings with CORS headers; www is the fallback
+    return getJson(build("https://api.reddit.com", "")).catch(function () {
+      return getJson(build("https://www.reddit.com", ".json"));
+    });
+  }
+
+  function extractTitles(text) {
+    var out = [], seen = {};
+    var patterns = [/\*\*([^*\n]{2,60}?)\*\*/g, /[“”]([^“”\n]{2,60}?)[“”]/g, /"([^"\n]{2,60}?)"/g];
+    patterns.forEach(function (re) {
+      var m;
+      while ((m = re.exec(text)) !== null && out.length < 25) {
+        var t = m[1].trim();
+        if (!/[a-z]/i.test(t)) continue;
+        if (/https?:\/\//i.test(t)) continue;
+        var year = null;
+        var ym = t.match(/^(.*?)\s*\((\d{4})\)$/);
+        if (ym) { t = ym[1].trim(); year = ym[2]; }
+        if (t.length < 2 || t.length > 60) continue;
+        var key = t.toLowerCase();
+        if (seen[key]) continue;
+        seen[key] = true;
+        out.push({ title: t, year: year });
+      }
+    });
+    return out.slice(0, 16);
+  }
+
+  // Resolve {title, year} candidates to real TMDB entries; markHit tags
+  // each with its source (Reddit sub, LLM provider) for the card badge.
+  function resolveTitleList(mode, titles, markHit) {
+    return Promise.all(titles.map(function (t) {
+      var params = { query: t.title };
+      if (t.year) params[mode === "movie" ? "year" : "first_air_date_year"] = t.year;
+      return tmdbFetch(mode === "movie" ? "/search/movie" : "/search/tv", params)
+        .then(function (data) {
+          var hit = (data.results || [])[0];
+          if (!hit || (hit.vote_count || 0) < 20) return null;
+          markHit(hit);
+          return hit;
+        }).catch(function () { return null; });
+    })).then(function (items) {
+      var seen = {}, out = [];
+      items.filter(Boolean).forEach(function (i) {
+        if (!seen[i.id]) { seen[i.id] = true; out.push(i); }
+      });
+      return out;
+    });
+  }
+
+  function resolveRedditTitles(mode, titles, sub) {
+    return resolveTitleList(mode, titles, function (hit) { hit.fromReddit = "r/" + sub; });
+  }
+
+  function fetchRedditFromSub(mode, sub, query) {
+    return redditFetch("/r/" + sub + "/search", { q: query, restrict_sr: 1, sort: "top", t: "all", limit: 6 })
+      .then(function (data) {
+        var posts = ((data && data.data && data.data.children) || [])
+          .map(function (c) { return c.data; }).filter(Boolean);
+        var postTexts = posts.map(function (p) { return p.selftext || ""; });
+        return Promise.all(posts.slice(0, 4).map(function (p) {
+          return redditFetch("/comments/" + p.id, { limit: 40, depth: 1 })
+            .then(function (thread) {
+              var comments = (thread && thread[1] && thread[1].data && thread[1].data.children) || [];
+              return comments.map(function (c) { return (c.data && c.data.body) || ""; }).join("\n");
+            }).catch(function () { return ""; });
+        })).then(function (commentTexts) {
+          var titles = extractTitles(postTexts.concat(commentTexts).join("\n"));
+          return resolveRedditTitles(mode, titles, sub);
+        });
+      });
+  }
+
+  function fetchRedditPicks(mode, moodText, genreLabel) {
+    var query = (moodText || "").trim() || (genreLabel ? genreLabel + " hidden gems" : "hidden gems");
+    return Promise.all(SUBREDDITS[mode].map(function (sub) {
+      // ifyoulikeblank spans films and TV, so hint the mode in its query
+      var q = sub === "ifyoulikeblank" ? query + (mode === "movie" ? " movie" : " show") : query;
+      return fetchRedditFromSub(mode, sub, q).catch(function () { return null; });
+    })).then(function (perSub) {
+      var okAny = perSub.some(function (x) { return x !== null; });
+      var seen = {}, items = [];
+      perSub.forEach(function (arr) {
+        (arr || []).forEach(function (i) {
+          if (!seen[i.id]) { seen[i.id] = true; items.push(i); }
+        });
+      });
+      return { ok: okAny, items: items };
+    });
+  }
+
+  /* ---------------- LLM picks (optional, key-gated) ----------------
+     One pasted key, provider auto-detected: sk-ant…/sk-… → Anthropic
+     (claude-opus-5, direct browser access — CORS verified live),
+     AIza… → Google Gemini (gemini-2.5-flash free tier, CORS verified
+     live). The model only ever suggests {title, year} candidates; every
+     one is resolved via TMDB search and passes the same filters as
+     everything else. */
+
+  function llmProviderFor(key) {
+    if (!key) return null;
+    if (key.indexOf("sk-") === 0) return "claude";
+    if (key.indexOf("AIza") === 0) return "gemini";
+    return null;
+  }
+
+  function llmProviderLabel(provider) {
+    return provider === "gemini" ? "Gemini" : "Claude";
+  }
+
+  function buildLlmPrompt(mode, moodText, genreLabel) {
+    var kind = mode === "movie" ? "films" : "TV series";
+    var lines = [
+      "Suggest 8 lesser-known, under-the-radar English-language " + kind + " for a viewer who has seen the obvious classics."
+    ];
+    if (genreLabel) lines.push("Genre: " + genreLabel + ".");
+    if (moodText && moodText.trim()) lines.push("Mood/vibe to match: " + moodText.trim() + ".");
+    lines.push("Hard rules: no superhero or comic-book adaptations, no panel shows, no game shows, no animation, nothing hugely mainstream.");
+    if (state.excludePeople.length) {
+      lines.push("Never suggest anything starring: " + state.excludePeople.join(", ") + ".");
+    }
+    if (state.excludeTitles.length) {
+      lines.push("Never suggest these titles or their spin-offs: " + state.excludeTitles.slice(0, 25).join("; ") + ".");
+    }
+    lines.push('Reply with ONLY a JSON array, no prose and no markdown fences: [{"title":"...","year":1999}]');
+    return lines.join("\n");
+  }
+
+  function parseLlmTitles(text) {
+    var cleaned = String(text || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+    var start = cleaned.indexOf("[");
+    var end = cleaned.lastIndexOf("]");
+    if (start === -1 || end <= start) return [];
+    try {
+      var arr = JSON.parse(cleaned.slice(start, end + 1));
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .filter(function (e) { return e && typeof e.title === "string" && e.title.trim(); })
+        .map(function (e) { return { title: e.title.trim(), year: e.year ? parseInt(e.year, 10) : null }; })
+        .slice(0, 8);
+    } catch (e) { return []; }
+  }
+
+  function llmComplete(provider, key, prompt) {
+    if (provider === "claude") {
+      return timedFetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-opus-5",
+          max_tokens: 2048,
+          output_config: { effort: "low" },
+          messages: [{ role: "user", content: prompt }]
+        })
+      }, 20000).then(function (r) {
+        if (!r.ok) throw new Error("claude " + r.status);
+        return r.json();
+      }).then(function (data) {
+        if (data.stop_reason === "refusal") return "";
+        var text = "";
+        (data.content || []).forEach(function (b) { if (b.type === "text") text += b.text || ""; });
+        return text;
+      });
+    }
+    return timedFetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    }, 20000).then(function (r) {
+      if (!r.ok) throw new Error("gemini " + r.status);
+      return r.json();
+    }).then(function (data) {
+      var cand = data.candidates && data.candidates[0];
+      var parts = (cand && cand.content && cand.content.parts) || [];
+      return parts.map(function (p) { return p.text || ""; }).join("");
+    });
+  }
+
+  function fetchLlmPicks(mode, moodText, genreLabel) {
+    var provider = llmProviderFor(state.settings.llmKey || "");
+    if (!provider) return Promise.resolve({ ok: false, configured: false, provider: null, items: [] });
+    return llmComplete(provider, state.settings.llmKey, buildLlmPrompt(mode, moodText, genreLabel))
+      .then(function (text) {
+        return resolveTitleList(mode, parseLlmTitles(text), function (hit) { hit.fromLlm = provider; });
+      })
+      .then(function (items) { return { ok: true, configured: true, provider: provider, items: items }; })
+      .catch(function () { return { ok: false, configured: true, provider: provider, items: [] }; });
+  }
+
+  /* ---------------- exclusion filtering ---------------- */
+
+  function nameExcluded(title) {
+    var lower = title.toLowerCase();
+    return state.excludeTitles.some(function (t) { return lower.indexOf(t.toLowerCase()) !== -1; });
+  }
+
+  function passesCoarseFilter(item, mode) {
+    if (item.original_language && item.original_language !== "en") return false;
+    if (state.seenIds[mode][item.id] || state.dismissedIds[mode][item.id] || state.softExcludeIds[mode][item.id]) return false;
+    var title = titleOf(item, mode) || "";
+    if (nameExcluded(title)) return false;
+    var genreIds = item.genre_ids || [];
+    if (genreIds.some(function (g) { return HARD_EXCLUDE_GENRES[mode].indexOf(g) !== -1; })) return false;
+    return true;
+  }
+
+  function tallyScore(item, mode) {
+    var genreIds = item.genre_ids || [];
+    var penalty = 0;
+    genreIds.forEach(function (g) { penalty += (state.genreDislikeTally[mode][g] || 0); });
+    return (item.vote_average || 0) - penalty * 0.6;
+  }
+
+  function checkKeywordsAndCast(item, mode) {
+    var keywordPath = "/" + mode + "/" + item.id + "/keywords";
+    var creditsPath = "/" + mode + "/" + item.id + "/credits";
+    return Promise.all([tmdbFetch(keywordPath, {}).catch(function () { return {}; }), tmdbFetch(creditsPath, {}).catch(function () { return {}; })])
+      .then(function (r) {
+        var kwList = r[0].keywords || r[0].results || [];
+        if (kwList.some(function (k) { return KEYWORD_BLOCKLIST.test(k.name || ""); })) return null;
+        var cast = (r[1].cast || []).slice(0, 10);
+        var hitsExcluded = cast.some(function (c) {
+          return state.excludePeople.some(function (p) { return (c.name || "").toLowerCase() === p.toLowerCase(); });
+        });
+        if (hitsExcluded) return null;
+        item.topCast = cast.slice(0, 3).map(function (c) { return c.name; }).filter(Boolean);
+        return item;
+      });
+  }
+
+  /* ---------------- fetching recommendations ---------------- */
+
+  // Coarse-filter, dedupe, rank, and keyword/cast-check a raw discover
+  // result list; resolves to items that cleared every filter.
+  function screenDiscover(results, mode, cap, excludeIds) {
+    var seenHere = {};
+    var coarse = results.filter(function (item) {
+      if (seenHere[item.id] || (excludeIds && excludeIds[item.id])) return false;
+      seenHere[item.id] = true;
+      return passesCoarseFilter(item, mode);
+    });
+    coarse.sort(function (a, b) { return tallyScore(b, mode) - tallyScore(a, mode); });
+    return Promise.all(coarse.slice(0, cap).map(function (item) { return checkKeywordsAndCast(item, mode); }))
+      .then(function (checked) { return checked.filter(Boolean); });
+  }
+
+  // Vibe-word expansions, curated from an empirical audit of which mood
+  // words resolve to populated TMDB keyword tags. Words whose own tag is
+  // sparse or missing ("slow burn", "cozy", "frenetic"…) borrow related
+  // terms that ARE well-tagged, so any vibe word still finds a pool.
+  var VIBE_EXPANSIONS = {
+    "cozy": ["heartwarming", "slice of life", "wholesome"],
+    "bleak": ["depressing", "nihilism", "dystopia"],
+    "feel good": ["uplifting", "heartwarming", "wholesome"],
+    "feel-good": ["uplifting", "heartwarming", "wholesome"],
+    "melancholy": ["bittersweet", "loneliness", "wistful"],
+    "awkward": ["socially awkward", "awkwardness", "cringe"],
+    "deadpan": ["dry humor", "dark comedy", "satire"],
+    "cringe": ["awkward", "secondhand embarrassment", "mockumentary"],
+    "absurd": ["surreal comedy", "absurdism", "satire"],
+    "slow burn": ["suspense", "atmospheric", "psychological thriller"],
+    "frenetic": ["fast-paced", "adrenaline", "one crazy night"],
+    "tense": ["suspense", "psychological thriller", "cat and mouse"],
+    "meditative": ["contemplative", "slow cinema", "philosophical"],
+    "heist": ["robbery", "con artist", "bank robbery"],
+    "conspiracy": ["paranoid thriller", "cover-up", "political thriller"],
+    "whodunit": ["murder mystery", "detective", "amateur detective"],
+    "folk horror": ["paganism", "occult", "cult"],
+    "neon": ["neo-noir", "cyberpunk", "synthwave"],
+    "gothic": ["gothic horror", "gothic romance", "southern gothic"],
+    "retro": ["retrofuturism", "nostalgia", "period piece"],
+    "surreal": ["surrealism", "dreamlike", "mind-bending"],
+    "campy": ["camp", "b movie", "cult film"],
+    "pulpy": ["pulp", "grindhouse", "hardboiled"],
+    "gritty": ["neo-noir", "crime drama", "urban decay"],
+    "coming of age": ["adolescence", "teenager", "growing up"],
+    "dysfunctional": ["dysfunctional family", "family secrets", "estrangement"],
+    "found family": ["surrogate family", "makeshift family", "unlikely friendship"],
+    "workplace": ["office", "coworker", "workplace comedy"],
+    "wintry": ["winter", "snow", "isolation"],
+    "claustrophobic": ["confined space", "single location", "isolation"],
+    "nostalgic": ["nostalgia", "childhood", "period piece"],
+    "dreamy": ["dreamlike", "ethereal", "magical realism"],
+    "mockumentary": ["found footage", "fake documentary", "satire"],
+    "con artist": ["grifter", "scam", "confidence trick"],
+    "small town": ["rural", "town secrets", "small town life"]
+  };
+
+  function expansionTermsFor(text) {
+    var lower = text.toLowerCase();
+    var terms = [];
+    for (var key in VIBE_EXPANSIONS) {
+      if (lower.indexOf(key) !== -1) {
+        VIBE_EXPANSIONS[key].forEach(function (t) { if (terms.indexOf(t) === -1) terms.push(t); });
+        if (terms.length >= 6) break;
+      }
+    }
+    return terms.slice(0, 6);
+  }
+
+  function searchKeywordIds(q, n) {
+    return tmdbFetch("/search/keyword", { query: q }).then(function (data) {
+      return (data.results || []).slice(0, n).map(function (k) { return k.id; });
+    }).catch(function () { return []; });
+  }
+
+  // Resolve a mood word to matching TMDB keyword ids, OR'd with "|" for
+  // discover: the top 5 tags for the word itself, plus the top 2 for each
+  // of its curated expansion terms — a single exact tag is far too narrow.
+  function resolveKeywords(text) {
+    if (!text.trim()) return Promise.resolve(null);
+    var jobs = [searchKeywordIds(text.trim(), 5)];
+    expansionTermsFor(text).forEach(function (t) { jobs.push(searchKeywordIds(t, 2)); });
+    return Promise.all(jobs).then(function (lists) {
+      var ids = [];
+      lists.forEach(function (l) {
+        l.forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); });
+      });
+      return ids.length ? ids.slice(0, 10).join("|") : null;
+    });
+  }
+
+  // Sample 3 random pages from up to the top 25 pages of the query (~500
+  // titles reachable per genre/keyword combo) instead of a single page from
+  // the top 5, so successive rounds keep surfacing different titles.
+  function fetchPool(mode, genreId, keywordId) {
+    var params = {
+      sort_by: "vote_average.desc",
+      "vote_count.gte": 40,
+      "vote_count.lte": mode === "movie" ? 5000 : 2000,
+      include_adult: false,
+      with_original_language: "en"
+    };
+    if (genreId) params.with_genres = genreId;
+    if (keywordId) params.with_keywords = keywordId;
+    function pageParams(p) {
+      var o = {};
+      for (var k in params) o[k] = params[k];
+      o.page = p;
+      return o;
+    }
+    var firstPage = 1 + Math.floor(Math.random() * 5);
+    return tmdbFetch("/discover/" + mode, pageParams(firstPage)).then(function (first) {
+      var total = Math.min(first.total_pages || 1, 25);
+      var candidates = [];
+      for (var p = 1; p <= total; p++) { if (p !== firstPage) candidates.push(p); }
+      var extra = [];
+      while (extra.length < 2 && candidates.length) {
+        extra.push(candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0]);
+      }
+      return Promise.all(extra.map(function (p) {
+        return tmdbFetch("/discover/" + mode, pageParams(p))
+          .then(function (d) { return d.results || []; })
+          .catch(function () { return []; });
+      })).then(function (moreArrays) {
+        var all = first.results || [];
+        moreArrays.forEach(function (arr) { all = all.concat(arr); });
+        return all;
+      });
+    });
+  }
+
+  function getRecommendations() {
+    if (!state.settings.tmdbKey) {
+      setStatus("Add a TMDB API key in Settings first.", true);
+      openDrawer();
+      return;
+    }
+    setLoading(true);
+    var mode = state.mode;
+    var genreId = state.activeGenre;
+    var keywordText = document.getElementById("moodInput").value;
+    var genreLabel = genreId ? GENRE_MAP[mode][genreId] : null;
+
+    // Progressive widening: try the query as asked, then drop the genre,
+    // then drop the mood keywords, then plain discover — stopping as soon
+    // as the pool is deep enough. Vibe words rarely map to well-populated
+    // TMDB tags, so a hard keyword filter must never be a dead end.
+    var moodDropped = false;
+    var discoverJob = resolveKeywords(keywordText).then(function (keywordIds) {
+      var attempts = [{ g: genreId, k: keywordIds }];
+      if (keywordIds && genreId) attempts.push({ g: null, k: keywordIds });
+      if (keywordIds) attempts.push({ g: genreId, k: null });
+      if (genreId) attempts.push({ g: null, k: null });
+      function runAttempts(i, acc) {
+        if (i >= attempts.length || acc.length >= 15) return Promise.resolve(acc);
+        var a = attempts[i];
+        if (keywordIds && a.k === null) moodDropped = true;
+        state.lastQuery[mode] = { genreId: a.g, keywordId: a.k };
+        return fetchPool(mode, a.g, a.k).then(function (res) {
+          return runAttempts(i + 1, acc.concat(res));
+        });
+      }
+      return runAttempts(0, []);
+    });
+
+    // Cap the whole Reddit phase at 10s so one slow subreddit can't stall
+    // the round — late results are dropped in favor of TMDB-only picks.
+    var redditFetchJob = Promise.race([
+      fetchRedditPicks(mode, keywordText, genreLabel),
+      new Promise(function (resolve) {
+        setTimeout(function () { resolve({ ok: false, items: [] }); }, 10000);
+      })
+    ]);
+
+    // Same treatment for the optional LLM source (its single request is
+    // already timeout-capped; this bounds the TMDB resolution tail too).
+    var llmFetchJob = Promise.race([
+      fetchLlmPicks(mode, keywordText, genreLabel),
+      new Promise(function (resolve) {
+        setTimeout(function () { resolve({ ok: false, configured: !!llmProviderFor(state.settings.llmKey || ""), provider: null, items: [] }); }, 22000);
+      })
+    ]);
+
+    Promise.all([discoverJob, redditFetchJob, llmFetchJob]).then(function (r) {
+      var results = r[0];
+      var reddit = r[1];
+      var llm = r[2];
+      var redditClean = reddit.items.filter(function (item) { return passesCoarseFilter(item, mode); });
+      var sourcedIds = {};
+      redditClean.forEach(function (i) { sourcedIds[i.id] = true; });
+      var llmClean = llm.items.filter(function (item) {
+        return passesCoarseFilter(item, mode) && !sourcedIds[item.id];
+      });
+      llmClean.forEach(function (i) { sourcedIds[i.id] = true; });
+
+      var redditJob = Promise.all(redditClean.slice(0, 8).map(function (item) { return checkKeywordsAndCast(item, mode); }))
+        .then(function (checked) { return checked.filter(Boolean); });
+      var llmScreenJob = Promise.all(llmClean.slice(0, 6).map(function (item) { return checkKeywordsAndCast(item, mode); }))
+        .then(function (checked) { return checked.filter(Boolean); });
+
+      return Promise.all([redditJob, llmScreenJob, screenDiscover(results, mode, 24, sourcedIds)])
+        .then(function (jr) {
+          var clean = jr[0].concat(jr[1]).concat(jr[2]);
+          var redditPicks = [], llmPicks = [], others = [];
+          clean.forEach(function (i) {
+            if (i.fromReddit && redditPicks.length < 2) redditPicks.push(i);
+            else if (i.fromLlm && llmPicks.length < 2) llmPicks.push(i);
+            else others.push(i);
+          });
+          var toShow = redditPicks.concat(llmPicks).concat(others).slice(0, 5);
+          state.pool[mode] = clean.filter(function (i) { return toShow.indexOf(i) === -1; });
+          renderResults(toShow, mode);
+          setLoading(false);
+          if (toShow.length === 0) {
+            setStatus("Nothing cleared every filter this round — try a broader mood or a different genre.", true);
+          } else {
+            var parts = [];
+            if (moodDropped && keywordText.trim()) {
+              parts.push("Few TMDB tag matches for “" + keywordText.trim() + "” — widened the net (community picks still use it).");
+            }
+            var nR = toShow.filter(function (i) { return i.fromReddit; }).length;
+            if (!reddit.ok) {
+              parts.push("Reddit couldn't be reached this round.");
+            } else if (nR) {
+              parts.push("Includes " + nR + " community pick" + (nR > 1 ? "s" : "") + " from Reddit.");
+            }
+            var nA = toShow.filter(function (i) { return i.fromLlm; }).length;
+            if (llm.configured && !llm.ok) {
+              parts.push("AI picks unavailable this round.");
+            } else if (nA) {
+              parts.push(nA + " AI pick" + (nA > 1 ? "s" : "") + " from " + llmProviderLabel(llm.provider) + ".");
+            }
+            setStatus(parts.join(" "));
+          }
+        });
+    }).catch(function (err) {
+      setLoading(false);
+      var isAuth = /TMDB 40[13]/.test(String(err && err.message || err));
+      setStatus(isAuth
+        ? "TMDB rejected the API key — double-check it in Settings."
+        : "Couldn't reach TMDB — likely a network issue. If your connection uses IPv6, see the IPv6 note in the README.", true);
+    });
+  }
+
+  function refillOne(mode) {
+    var pool = state.pool[mode];
+    while (pool.length) {
+      var candidate = pool.shift();
+      if (passesCoarseFilter(candidate, mode)) return candidate;
+    }
+    return null;
+  }
+
+  // When dismissals run the in-memory pool low, quietly fetch and screen
+  // another discover batch in the background so the grid never bleeds out.
+  var refilling = { movie: false, tv: false };
+  function topUpPool(mode) {
+    if (refilling[mode] || !state.settings.tmdbKey) return;
+    refilling[mode] = true;
+    var q = state.lastQuery[mode] || { genreId: null, keywordId: null };
+    fetchPool(mode, q.genreId, q.keywordId)
+      .then(function (results) { return screenDiscover(results, mode, 12, null); })
+      .then(function (clean) {
+        var have = {};
+        state.pool[mode].forEach(function (i) { have[i.id] = true; });
+        Array.prototype.forEach.call(document.querySelectorAll("#resultsGrid .card"), function (c) {
+          have[c.dataset.id] = true;
+        });
+        clean.forEach(function (i) {
+          if (!have[i.id]) state.pool[mode].push(i);
+        });
+        if (mode === state.mode) {
+          var grid = document.getElementById("resultsGrid");
+          while (grid.children.length < 5) {
+            var next = refillOne(mode);
+            if (!next) break;
+            grid.appendChild(renderCard(next, mode));
+          }
+        }
+      })
+      .catch(function () {})
+      .then(function () { refilling[mode] = false; });
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  function posterUrl(path) { return path ? "https://image.tmdb.org/t/p/w342" + path : null; }
+
+  function buildAddLink(title, mode) {
+    var term = encodeURIComponent(title).replace(/%20/g, "+");
+    var host = mode === "movie" ? state.settings.radarrHost : state.settings.sonarrHost;
+    if (!host) return null;
+    var url = host.indexOf("http") === 0 ? host : "http://" + host;
+    return url.replace(/\/$/, "") + "/add/new?term=" + term;
+  }
+
+  function styleLine(item, mode) {
+    var ids = item.genre_ids || [];
+    var labels = ids.map(function (g) { return GENRE_MAP[mode][g]; }).filter(Boolean).slice(0, 2);
+    return labels.length ? labels.join(" · ") : (mode === "movie" ? "Film" : "Series");
+  }
+
+  function renderCard(item, mode) {
+    var title = titleOf(item, mode);
+    var year = yearOf(item, mode);
+    var hook = (item.overview || "").split(". ")[0];
+    if (hook.length > 110) hook = hook.slice(0, 107) + "…";
+    var addLink = buildAddLink(title, mode);
+    var poster = posterUrl(item.poster_path);
+
+    var card = document.createElement("div");
+    card.className = "card";
+    card.dataset.id = item.id;
+
+    var posterHtml = poster
+      ? '<img src="' + poster + '" alt="' + escapeHtml(title) + ' poster" loading="lazy">'
+      : '<div class="poster-fallback">' + escapeHtml(title) + '</div>';
+
+    var castHtml = (item.topCast && item.topCast.length)
+      ? '<div class="cast-line">With ' + escapeHtml(item.topCast.join(", ")) + '</div>'
+      : '';
+    var sourceHtml = item.fromReddit
+      ? '<div class="source-line">✷ via ' + escapeHtml(item.fromReddit) + '</div>'
+      : item.fromLlm
+        ? '<div class="source-line">✷ ' + llmProviderLabel(item.fromLlm) + ' pick</div>'
+        : '';
+
+    card.innerHTML =
+      '<div class="poster-wrap">' + posterHtml +
+        '<button class="half-zone watch" type="button" title="Mark watched" aria-label="Thumbs up — mark watched">👍</button>' +
+        '<button class="half-zone dismiss" type="button" title="Not for me" aria-label="Thumbs down — not for me">👎</button>' +
+      '</div>' +
+      '<div class="tear"></div>' +
+      '<div class="card-body">' +
+        '<div class="style-line">' + escapeHtml(styleLine(item, mode)) + '</div>' +
+        '<h3>' + (addLink ? '<a class="title-link" href="' + addLink + '" target="_blank" rel="noopener" title="Add to ' + (mode === "movie" ? "Radarr" : "Sonarr") + '">' + escapeHtml(title) + '</a>' : escapeHtml(title)) + '</h3>' +
+        '<div class="year">' + escapeHtml(year) + '</div>' +
+        '<div class="hook">' + escapeHtml(hook) + '</div>' +
+        castHtml +
+        sourceHtml +
+      '</div>';
+
+    card.querySelector(".dismiss").addEventListener("click", function () { onDismiss(item, mode, card); });
+    card.querySelector(".watch").addEventListener("click", function () { onMarkWatched(item, mode, card); });
+    return card;
+  }
+
+  function renderResults(items, mode) {
+    var grid = document.getElementById("resultsGrid");
+    grid.innerHTML = "";
+    var placeholder = document.getElementById("placeholderState");
+    if (items.length === 0) {
+      placeholder.hidden = false;
+      placeholder.innerHTML = "<h3>No clean matches</h3><p>Everything nearby got filtered out. Try a different mood word or drop the genre filter.</p>";
+      return;
+    }
+    placeholder.hidden = true;
+    items.forEach(function (item) { grid.appendChild(renderCard(item, mode)); });
+  }
+
+  function replaceCard(oldCard, mode) {
+    var next = refillOne(mode);
+    if (next) {
+      var fresh = renderCard(next, mode);
+      oldCard.replaceWith(fresh);
+    } else {
+      oldCard.remove();
+    }
+    if (state.pool[mode].length < 3) topUpPool(mode);
+  }
+
+  function onDismiss(item, mode, card) {
+    state.dismissedIds[mode][item.id] = true;
+    (item.genre_ids || []).forEach(function (g) {
+      state.genreDislikeTally[mode][g] = (state.genreDislikeTally[mode][g] || 0) + 1;
+    });
+    persistTrackers();
+    tmdbFetch("/" + mode + "/" + item.id + "/similar", {}).then(function (data) {
+      (data.results || []).slice(0, 6).forEach(function (s) { state.softExcludeIds[mode][s.id] = true; });
+      persistTrackers();
+    }).catch(function () {});
+    replaceCard(card, mode);
+  }
+
+  function onMarkWatched(item, mode, card) {
+    state.seenIds[mode][item.id] = true;
+    persistTrackers();
+    replaceCard(card, mode);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ---------------- UI wiring ---------------- */
+
+  function setStatus(msg, isWarn) {
+    var el = document.getElementById("statusLine");
+    el.textContent = msg;
+    el.style.color = isWarn ? "#f4a261" : "var(--teal)";
+  }
+
+  function setLoading(isLoading) {
+    var btn = document.getElementById("findBtn");
+    btn.disabled = isLoading;
+    var placeholder = document.getElementById("placeholderState");
+    var grid = document.getElementById("resultsGrid");
+    if (isLoading) {
+      grid.innerHTML = "";
+      placeholder.hidden = false;
+      placeholder.innerHTML = '<div class="spinner"></div><p>Digging through the crates…</p>';
+    }
+  }
+
+  function renderChips() {
+    var row = document.getElementById("genreChips");
+    row.innerHTML = "";
+    GENRES[state.mode].forEach(function (g) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = g.label;
+      chip.setAttribute("aria-pressed", String(state.activeGenre === g.id));
+      chip.addEventListener("click", function () {
+        state.activeGenre = state.activeGenre === g.id ? null : g.id;
+        renderChips();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    state.activeGenre = null;
+    document.getElementById("modeMovie").setAttribute("aria-pressed", String(mode === "movie"));
+    document.getElementById("modeTv").setAttribute("aria-pressed", String(mode === "tv"));
+    renderChips();
+    document.getElementById("resultsGrid").innerHTML = "";
+    document.getElementById("placeholderState").hidden = true;
+  }
+
+  function renderExclusions() {
+    var wrap = document.getElementById("exclusionList");
+    wrap.innerHTML = "";
+    state.excludePeople.concat(state.excludeTitles).forEach(function (name) {
+      var tag = document.createElement("span");
+      tag.className = "exclusion-tag";
+      tag.innerHTML = escapeHtml(name) + ' <button type="button" aria-label="Remove ' + escapeHtml(name) + '">✕</button>';
+      tag.querySelector("button").addEventListener("click", function () {
+        state.excludePeople = state.excludePeople.filter(function (n) { return n !== name; });
+        state.excludeTitles = state.excludeTitles.filter(function (n) { return n !== name; });
+        persistExclusions();
+        renderExclusions();
+      });
+      wrap.appendChild(tag);
+    });
+  }
+
+  function refreshWatchedCount() {
+    var count = Object.keys(state.seenIds.movie).length + Object.keys(state.seenIds.tv).length;
+    document.getElementById("watchedCount").textContent = count + " title" + (count === 1 ? "" : "s") + " marked as seen.";
+  }
+
+  function openDrawer() {
+    document.getElementById("tmdbKey").value = state.settings.tmdbKey;
+    document.getElementById("llmKey").value = state.settings.llmKey || "";
+    document.getElementById("radarrHost").value = state.settings.radarrHost;
+    document.getElementById("sonarrHost").value = state.settings.sonarrHost;
+    renderExclusions();
+    refreshWatchedCount();
+    document.getElementById("backdrop").hidden = false;
+    document.getElementById("settingsDrawer").hidden = false;
+  }
+  function closeDrawer() {
+    document.getElementById("backdrop").hidden = true;
+    document.getElementById("settingsDrawer").hidden = true;
+  }
+
+  function saveSettingsFromForm() {
+    state.settings.tmdbKey = document.getElementById("tmdbKey").value.trim();
+    state.settings.llmKey = document.getElementById("llmKey").value.trim();
+    state.settings.radarrHost = document.getElementById("radarrHost").value.trim() || "192.168.1.9:7878";
+    state.settings.sonarrHost = document.getElementById("sonarrHost").value.trim() || "192.168.1.9:8989";
+
+    var tmdbStatus = document.getElementById("tmdbStatus");
+    tmdbStatus.innerHTML = "";
+    var llmStatus = document.getElementById("llmStatus");
+    llmStatus.innerHTML = "";
+    if (state.settings.llmKey) {
+      var llmProvider = llmProviderFor(state.settings.llmKey);
+      llmStatus.innerHTML = llmProvider
+        ? '<div class="field-note ok">AI picks on — key recognised as ' + llmProviderLabel(llmProvider) + '.</div>'
+        : '<div class="field-note warn">Key not recognised — Anthropic keys start with sk-ant-, Gemini keys with AIza. AI picks stay off until it matches.</div>';
+    }
+
+    return persistSettings().then(function () { return seedAlreadySeen(); }).then(function () {
+      if (state.settings.tmdbKey) {
+        tmdbStatus.innerHTML = '<div class="field-note ok">Saved. Your favourites are pre-marked as seen.</div>';
+      }
+    });
+  }
+
+  /* ---------------- init ---------------- */
+
+  document.addEventListener("DOMContentLoaded", function () {
+    loadState().then(function () {
+      setMode("movie");
+      document.getElementById("modeMovie").addEventListener("click", function () { setMode("movie"); });
+      document.getElementById("modeTv").addEventListener("click", function () { setMode("tv"); });
+      document.getElementById("findBtn").addEventListener("click", getRecommendations);
+      document.getElementById("moodInput").addEventListener("keydown", function (e) { if (e.key === "Enter") getRecommendations(); });
+
+      document.getElementById("openSettings").addEventListener("click", openDrawer);
+      document.getElementById("closeSettings").addEventListener("click", closeDrawer);
+      document.getElementById("backdrop").addEventListener("click", closeDrawer);
+      document.getElementById("saveSettings").addEventListener("click", function () {
+        var btn = document.getElementById("saveSettings");
+        var originalLabel = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Saving…";
+        saveSettingsFromForm().then(function () {
+          btn.disabled = false;
+          btn.textContent = originalLabel;
+          closeDrawer();
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = originalLabel;
+          document.getElementById("tmdbStatus").innerHTML = '<div class="field-note warn">Save didn\'t go through — try again.</div>';
+        });
+      });
+
+      document.getElementById("addExclusionBtn").addEventListener("click", function () {
+        var input = document.getElementById("newExclusion");
+        var val = input.value.trim();
+        if (!val) return;
+        state.excludeTitles.push(val);
+        input.value = "";
+        persistExclusions();
+        renderExclusions();
+      });
+
+      document.getElementById("clearDismissed").addEventListener("click", function () {
+        state.dismissedIds = { movie: {}, tv: {} };
+        state.softExcludeIds = { movie: {}, tv: {} };
+        state.genreDislikeTally = { movie: {}, tv: {} };
+        persistTrackers();
+        setStatus("Dismissed picks cleared.");
+      });
+
+      if (!state.settings.tmdbKey) {
+        var placeholder = document.getElementById("placeholderState");
+        placeholder.hidden = false;
+        placeholder.innerHTML = "<h3>Set up in a few seconds</h3><p>Add a free TMDB key in Settings, then pick a genre or type a mood to get your first five.</p>";
+        openDrawer();
+      } else {
+        seedAlreadySeen();
+      }
+    });
+  });
+
+  // Registering the service worker (plus the manifest + icon links in
+  // <head>) is what makes Chrome on Android offer "Install app" — the
+  // worker itself only ever caches this shell, never TMDB/Reddit/LLM
+  // responses. Requires a secure context (https:, or localhost); silently
+  // no-ops over plain file:// or http:, which is fine there.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
